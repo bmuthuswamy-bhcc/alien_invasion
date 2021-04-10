@@ -30,20 +30,43 @@ class AlienInvasion:
 	def run_game(self):
 		"""Start the main game loop."""
 		while True:
-			# Watch for keyboard and mouse events.
-			for event in pygame.event.get():
-				if event.type == pygame.QUIT:
-					sys.exit()
+			self.check_events()
+			self.update_screen()
 
-			self.screen.fill(self.settings.bg_color)
+	def check_events(self):
+		"""Watch for keyboard and mouse events."""
+		for event in pygame.event.get():
+			if event.type == pygame.QUIT:
+				sys.exit()
+			elif event.type == pygame.KEYDOWN:
+				self.check_keydown_events(event)				
+			elif event.type == pygame.KEYUP:
+				self.check_keyup_events(event)
+		
+	def check_keydown_events(self, event):
+		if event.key == pygame.K_q:
+			sys.exit()
+		elif event.key == pygame.K_RIGHT:
+			self.ship.moving_right = True
+		elif event.key == pygame.K_LEFT:
+			self.ship.moving_left = True
 
-			self.ship.blitme()
+	def check_keyup_events(self, event):
+		if event.key == pygame.K_RIGHT:
+			self.ship.moving_right = False
+		elif event.key == pygame.K_LEFT:
+			self.ship.moving_left = False
 
-			# Make the most recently drawn screen visible.
-			# When we move game elements around the screen,
-			# pygame.display.flip() continually updates the display
-			# to show the new positions of game elements.
-			pygame.display.flip()
+
+	def update_screen(self):
+		"""Update images on the screen, and flip to the new screen."""
+		self.screen.fill(self.settings.bg_color)
+		self.ship.update()
+		# Make the most recently drawn screen visible.
+		# When we move game elements around the screen,
+		# pygame.display.flip() continually updates the display
+		# to show the new positions of game elements.
+		pygame.display.flip()
 
 
 if __name__ == '__main__':
