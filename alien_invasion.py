@@ -7,6 +7,7 @@ import pygame
 from settings import Settings
 from ship import Ship
 from bullet import Bullet
+from alien import Alien
 
 class AlienInvasion:
 	"""Overall class to manage game assets and behavior."""
@@ -30,11 +31,14 @@ class AlienInvasion:
 		# keep track of bullets fired when we press spacebar by using Group
 		# (a list with extra functionality)
 		self.bullets = pygame.sprite.Group()
+		self.aliens = pygame.sprite.Group()
+
+		self._create_fleet()
 
 	def run_game(self):
 		"""Start the main game loop."""
 		while True:
-			self.check_events()
+			self._check_events()
 			self.ship.update()
 			self.bullets.update() # bullets is a Pygame Group => calls each bullet's update method
 			
@@ -43,19 +47,19 @@ class AlienInvasion:
 				if bullet.rect.bottom <= 0:
 					self.bullets.remove(bullet)			
 
-			self.update_screen()
+			self._update_screen()
 
-	def check_events(self):
+	def _check_events(self):
 		"""Watch for keyboard and mouse events."""
 		for event in pygame.event.get():
 			if event.type == pygame.QUIT:
 				sys.exit()
 			elif event.type == pygame.KEYDOWN:
-				self.check_keydown_events(event)				
+				self._check_keydown_events(event)				
 			elif event.type == pygame.KEYUP:
-				self.check_keyup_events(event)
+				self._check_keyup_events(event)
 		
-	def check_keydown_events(self, event):
+	def _check_keydown_events(self, event):
 		if event.key == pygame.K_q:
 			sys.exit()
 		elif event.key == pygame.K_RIGHT:
@@ -65,7 +69,7 @@ class AlienInvasion:
 		elif event.key == pygame.K_SPACE:
 			self._fire_bullet()
 
-	def check_keyup_events(self, event):
+	def _check_keyup_events(self, event):
 		if event.key == pygame.K_RIGHT:
 			self.ship.moving_right = False
 		elif event.key == pygame.K_LEFT:
@@ -77,12 +81,44 @@ class AlienInvasion:
 			new_bullet = Bullet(self)
 			self.bullets.add(new_bullet)
 
-	def update_screen(self):
+	def _create_fleet(self):
+		"""Create the fleet of aliens."""
+		alien = Alien(self)
+		alien_width, alien_height = alien.rect.size
+		
+		# Compute number of aliens that can fit in a row
+		available_space_x = self.settings.screen_width - (2*alien_width)
+		number_aliens_x = available_space_x // (2*alien_width)
+
+		# Determine number of rows of aliens that fit on the screen
+		ship_height = self.ship.rect.height
+		available_space_y = (self.settings.screen_height - (3*alien_height) - ship_height)
+		number_rows = available_space_y // (2 * alien_height)
+
+		for row_number in range (number_rows):
+			for alien_number in range(number_aliens_x):
+				self._create_alien(alien_number, row_number)
+
+	def _create_alien(self,alien_number,row_number):
+		"""Create an alien and place it in the row."""
+		alien = Alien(self)
+		alien_width, alien_height = alien.rect.size;
+		
+		alien.x = alien_width + 2*alien_width*alien_number
+		alien.rect.x = alien.x
+		
+		alien.y = alien_height + 2*alien_height*row_number
+		alien.rect.y = alien.y
+
+		self.aliens.add(alien)
+
+	def _update_screen(self):
 		"""Update images on the screen, and flip to the new screen."""
 		self.screen.fill(self.settings.bg_color)
 		self.ship.blitme()
 		for bullet in self.bullets.sprites():
 			bullet.draw_bullet()
+		self.aliens.draw(self.screen)
 
 		# Make the most recently drawn screen visible.
 		# When we move game elements around the screen,
