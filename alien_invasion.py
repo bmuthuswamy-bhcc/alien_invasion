@@ -6,6 +6,7 @@ import pygame
 # *same folder* as alien_invasion.py
 from settings import Settings
 from ship import Ship
+from bullet import Bullet
 
 class AlienInvasion:
 	"""Overall class to manage game assets and behavior."""
@@ -26,11 +27,22 @@ class AlienInvasion:
 		self.screen = pygame.display.set_mode((self.settings.screen_width,self.settings.screen_height))
 		pygame.display.set_caption("Alien Invasion")
 		self.ship = Ship(self)
+		# keep track of bullets fired when we press spacebar by using Group
+		# (a list with extra functionality)
+		self.bullets = pygame.sprite.Group()
 
 	def run_game(self):
 		"""Start the main game loop."""
 		while True:
 			self.check_events()
+			self.ship.update()
+			self.bullets.update() # bullets is a Pygame Group => calls each bullet's update method
+			
+			# Get rid of bullets that have gone past the top of the screen
+			for bullet in self.bullets.copy():
+				if bullet.rect.bottom <= 0:
+					self.bullets.remove(bullet)			
+
 			self.update_screen()
 
 	def check_events(self):
@@ -50,6 +62,8 @@ class AlienInvasion:
 			self.ship.moving_right = True
 		elif event.key == pygame.K_LEFT:
 			self.ship.moving_left = True
+		elif event.key == pygame.K_SPACE:
+			self._fire_bullet()
 
 	def check_keyup_events(self, event):
 		if event.key == pygame.K_RIGHT:
@@ -57,11 +71,19 @@ class AlienInvasion:
 		elif event.key == pygame.K_LEFT:
 			self.ship.moving_left = False
 
+	def _fire_bullet(self):
+		"""Create a new bullet and add it to the bullets group."""
+		if len(self.bullets) < self.settings.bullets_allowed:
+			new_bullet = Bullet(self)
+			self.bullets.add(new_bullet)
 
 	def update_screen(self):
 		"""Update images on the screen, and flip to the new screen."""
 		self.screen.fill(self.settings.bg_color)
-		self.ship.update()
+		self.ship.blitme()
+		for bullet in self.bullets.sprites():
+			bullet.draw_bullet()
+
 		# Make the most recently drawn screen visible.
 		# When we move game elements around the screen,
 		# pygame.display.flip() continually updates the display
